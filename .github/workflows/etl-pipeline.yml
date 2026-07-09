@@ -1,0 +1,42 @@
+name: FinOps ETL Pipeline
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-pipelines:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install dlt[postgres] psycopg2-binary boto3 azure-identity azure-storage-blob azure-mgmt-costmanagement google-cloud-bigquery stripe
+
+      - name: Run AWS pipeline
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: python pipelines/aws_pipeline.py
+
+      - name: Run Azure pipeline
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: python pipelines/azure_pipeline.py
+
+      - name: Run GCP pipeline
+        run: python pipelines/gcp_pipeline.py
+
+      - name: Run Stripe pipeline
+        env:
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+        run: python pipelines/stripe_pipeline.py

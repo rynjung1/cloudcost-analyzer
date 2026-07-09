@@ -1,0 +1,24 @@
+[pipeline]
+pipeline_name = "aws_cost_pipeline"
+
+[sources.aws_cur]
+bucket_url = "s3://ryanjung-finops-cur"
+file_glob = "cur-reports/finops-cur-export/data/BILLING_PERIOD=*/*.parquet"
+table_name = "aws_costs"
+dataset_name = "aws_costs"
+initial_start_date = "2026-06-01"
+
+[sources.azure_cur]
+subscription_id = ""
+start_date = "2026-06-01"
+end_date = "2026-06-30"
+
+[sources.gcp_billing]
+project_id = ""
+dataset = "gcp_billing_export"
+table_names = ["gcp_costs_daily"]
+dataset_name = "gcp_costs"
+
+[sources.stripe]
+start_date = "2026-06-01"
+end_date = "2026-06-30"
