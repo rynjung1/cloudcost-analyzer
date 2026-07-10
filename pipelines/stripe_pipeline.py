@@ -5,8 +5,15 @@ Pulls Stripe balance transactions into PostgreSQL using the Stripe REST API.
 """
 
 import os
+from datetime import datetime, timezone
 import dlt
 import requests
+
+
+def to_unix_timestamp(date_str):
+    # converts a "YYYY-MM-DD" string into a Unix timestamp, which is what Stripe's API expects
+    dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    return int(dt.timestamp())
 
 
 def get_balance_transactions(api_key, start_date, end_date):
@@ -14,8 +21,8 @@ def get_balance_transactions(api_key, start_date, end_date):
     headers = {"Authorization": f"Bearer {api_key}"}
     params = {
         "limit": 100,
-        "created[gte]": start_date,
-        "created[lte]": end_date
+        "created[gte]": to_unix_timestamp(start_date),
+        "created[lte]": to_unix_timestamp(end_date)
     }
 
     while True:

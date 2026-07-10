@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: raw_aws
+    schema: aws_costs
+    tables:
+      - name: aws_costs
+
+  - name: raw_azure
+    schema: azure_costs
+    tables:
+      - name: azure_costs
+
+  - name: raw_gcp
+    schema: gcp_costs
+    tables:
+      - name: bigquery_billing_table
+
+  - name: raw_stripe
+    schema: stripe_revenue
+    tables:
+      - name: stripe_revenue

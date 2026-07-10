@@ -102,7 +102,7 @@ if __name__ == "__main__":
             dataset_name="azure_costs"
         )
 
-        load_info = pipeline.run(resource=azure_costs(csv_text))
+        load_info = pipeline.run(azure_costs(csv_text))
         print("done")
     except Exception as e:
         print(f"Pipeline failed: {e}")
