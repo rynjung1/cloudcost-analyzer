@@ -1,0 +1,22 @@
+version: 1
+type: metrics_view
+model: unified_costs
+display_name: "Cloud Costs"
+timeseries: usage_date
+
+dimensions:
+  - name: cloud_provider
+    display_name: "Cloud Provider"
+    column: cloud_provider
+  - name: service_name
+    display_name: "Service"
+    column: service_name
+
+measures:
+  - name: total_cost_usd
+    display_name: "Total Cost (USD)"
+    expression: sum(cost_usd)
+    format_preset: currency_usd
+  - name: record_count
+    display_name: "Line Items"
+    expression: count(*)

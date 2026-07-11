@@ -1,0 +1,15 @@
+type: explore
+display_name: "Unit Economics"
+metrics_view: unit_economics_metrics
+
+dimensions: "*"
+measures: "*"
+
+time_ranges:
+  - "P7D"
+  - "P30D"
+  - "P3M"
+
+defaults:
+  time_range: "P30D"
+  comparison_mode: time

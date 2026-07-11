@@ -1,0 +1,21 @@
+version: 1
+type: metrics_view
+model: unit_economics
+display_name: "Unit Economics"
+timeseries: usage_date
+
+dimensions: []
+
+measures:
+  - name: total_cost_usd
+    display_name: "Total Cloud Cost (USD)"
+    expression: sum(total_cost_usd)
+    format_preset: currency_usd
+  - name: total_revenue_usd
+    display_name: "Total Revenue (USD)"
+    expression: sum(total_revenue_usd)
+    format_preset: currency_usd
+  - name: cost_as_pct_of_revenue
+    display_name: "Cost as % of Revenue"
+    expression: sum(total_cost_usd) / nullif(sum(total_revenue_usd), 0) * 100
+    format_preset: percentage

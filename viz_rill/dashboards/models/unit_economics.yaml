@@ -1,0 +1,19 @@
+type: model
+connector: postgres
+sql: |
+  with daily_cost as (
+    select usage_date, sum(cost_usd) as total_cost_usd
+    from analytics.unified_cost_model
+    group by usage_date
+  ),
+  daily_revenue as (
+    select transaction_date::date as usage_date, sum(amount_usd) as total_revenue_usd
+    from analytics.stg_stripe_revenue
+    group by transaction_date::date
+  )
+  select
+    coalesce(c.usage_date, r.usage_date) as usage_date,
+    coalesce(c.total_cost_usd, 0) as total_cost_usd,
+    coalesce(r.total_revenue_usd, 0) as total_revenue_usd
+  from daily_cost c
+  full outer join daily_revenue r on c.usage_date = r.usage_date

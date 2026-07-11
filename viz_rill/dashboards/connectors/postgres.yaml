@@ -1,0 +1,5 @@
+type: connector
+driver: postgres
+
+# credentials pulled from env var, never hardcode secrets in this file
+database_url: "{{ .env.connector.postgres.database_url }}"

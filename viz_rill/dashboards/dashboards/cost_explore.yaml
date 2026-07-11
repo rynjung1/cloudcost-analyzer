@@ -1,0 +1,16 @@
+type: explore
+display_name: "Cloud Cost Explorer"
+metrics_view: cost_metrics
+
+dimensions: "*"
+measures: "*"
+
+time_ranges:
+  - "P7D"
+  - "P30D"
+  - "P3M"
+  - "P12M"
+
+defaults:
+  time_range: "P30D"
+  comparison_mode: time
