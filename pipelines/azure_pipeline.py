@@ -12,11 +12,20 @@ How the API works (async three-call pattern):
 3. GET the blob link to download the actual CSV cost data.
 """
 
+import csv
+import io
 import os
+import sys
 import time
-import requests
 import dlt
 from azure.identity import ClientSecretCredential
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from http_client import session_with_retries
+
+http = session_with_retries()
+
+MAX_POLL_ATTEMPTS = 60  # 60 * 5s = 5 minutes
 
 
 def get_access_token():
@@ -44,7 +53,7 @@ def generate_cost_report(token, subscription_id, start_date, end_date):
         }
     }
 
-    response = requests.post(url, headers=headers, json=body)
+    response = http.post(url, headers=headers, json=body)
 
     if response.status_code != 202:
         raise Exception(f"Failed to generate report: {response.status_code} {response.text}")
@@ -55,8 +64,8 @@ def generate_cost_report(token, subscription_id, start_date, end_date):
 def poll_until_ready(token, polling_url):
     headers = {"Authorization": f"Bearer {token}"}
 
-    while True:
-        response = requests.get(polling_url, headers=headers)
+    for _ in range(MAX_POLL_ATTEMPTS):
+        response = http.get(polling_url, headers=headers)
 
         if response.status_code == 200:
             return response.json()
@@ -66,23 +75,20 @@ def poll_until_ready(token, polling_url):
         else:
             raise Exception(f"Unexpected status: {response.status_code}")
 
+    raise TimeoutError(f"Report was not ready after {MAX_POLL_ATTEMPTS} polling attempts")
+
 
 def download_csv(result):
     download_url = result["manifest"]["blobs"][0]["blobLink"]
-    response = requests.get(download_url)
+    response = http.get(download_url)
     return response.text
 
 
 @dlt.resource(name="azure_costs", write_disposition="merge")
 def azure_costs(csv_text):
-    lines = csv_text.split("\n")
-    headers = lines[0].split(",")
-
-    for line in lines[1:]:
-        if not line:
-            continue
-        values = line.split(",")
-        yield dict(zip(headers, values))
+    reader = csv.DictReader(io.StringIO(csv_text))
+    for row in reader:
+        yield row
 
 
 if __name__ == "__main__":
@@ -106,3 +112,4 @@ if __name__ == "__main__":
         print("done")
     except Exception as e:
         print(f"Pipeline failed: {e}")
+        sys.exit(1)

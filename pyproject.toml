@@ -11,9 +11,20 @@ dependencies = [
     "boto3>=1.43.44",
     "dbt-postgres>=1.10.2",
     "dlt>=1.28.1",
+    "fastapi>=0.139.0",
     "google-cloud-bigquery>=3.42.2",
     "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.2",
     "redis>=8.0.1",
     "stripe>=15.3.0",
+    "uvicorn>=0.51.0",
 ]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

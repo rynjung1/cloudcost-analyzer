@@ -5,9 +5,14 @@ Pulls Stripe balance transactions into PostgreSQL using the Stripe REST API.
 """
 
 import os
+import sys
 from datetime import datetime, timezone
 import dlt
-import requests
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from http_client import session_with_retries
+
+http = session_with_retries()
 
 
 def to_unix_timestamp(date_str):
@@ -26,7 +31,7 @@ def get_balance_transactions(api_key, start_date, end_date):
     }
 
     while True:
-        response = requests.get(url, headers=headers, params=params).json()
+        response = http.get(url, headers=headers, params=params).json()
 
         for transaction in response["data"]:
             yield transaction
@@ -59,3 +64,4 @@ if __name__ == "__main__":
         print("done")
     except Exception as e:
         print(f"Pipeline failed: {e}")
+        sys.exit(1)

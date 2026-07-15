@@ -13,12 +13,13 @@ Routes:
 from datetime import date
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel
+from api.auth import require_api_key
 from api.cache import get_cached, set_cached
 from api.database import run_query
 
-app = FastAPI(title="Cloud Cost Analyzer API")
+app = FastAPI(title="Cloud Cost Analyzer API", dependencies=[Depends(require_api_key)])
 
 
 # ---------- Pydantic response models ----------
