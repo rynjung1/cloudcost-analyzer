@@ -31,15 +31,20 @@ def get_balance_transactions(api_key, start_date, end_date):
     }
 
     while True:
-        response = http.get(url, headers=headers, params=params).json()
+        response = http.get(url, headers=headers, params=params)
 
-        for transaction in response["data"]:
+        if response.status_code != 200:
+            raise Exception(f"Stripe API error: {response.status_code} {response.text}")
+
+        body = response.json()
+
+        for transaction in body["data"]:
             yield transaction
 
-        if not response["has_more"]:
+        if not body["has_more"]:
             break
 
-        params["starting_after"] = response["data"][-1]["id"]
+        params["starting_after"] = body["data"][-1]["id"]
 
 
 @dlt.resource(name="stripe_revenue", write_disposition="merge", primary_key="id")

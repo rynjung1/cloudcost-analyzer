@@ -11,7 +11,7 @@ Routes:
 """
 
 from datetime import date
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel
@@ -20,6 +20,8 @@ from api.cache import get_cached, set_cached
 from api.database import run_query
 
 app = FastAPI(title="Cloud Cost Analyzer API", dependencies=[Depends(require_api_key)])
+
+CloudProvider = Literal["aws", "azure", "gcp"]
 
 
 # ---------- Pydantic response models ----------
@@ -65,7 +67,7 @@ class UnitEconomics(BaseModel):
 
 @app.get("/costs", response_model=list[CostRecord])
 def get_costs(
-    cloud: str = Query(..., description="Cloud provider: aws, azure, or gcp"),
+    cloud: CloudProvider = Query(..., description="Cloud provider: aws, azure, or gcp"),
     month: str = Query(..., description="Month in YYYY-MM format"),
 ):
     rows = run_query(
@@ -103,7 +105,7 @@ def get_cost_summary():
 
 @app.get("/costs/top-services", response_model=list[ServiceCost])
 def get_top_services(
-    cloud: str = Query(..., description="Cloud provider: aws, azure, or gcp"),
+    cloud: CloudProvider = Query(..., description="Cloud provider: aws, azure, or gcp"),
     limit: int = Query(10, ge=1, le=100),
 ):
     rows = run_query(

@@ -13,6 +13,7 @@ How the API works (async three-call pattern):
 """
 
 import csv
+import hashlib
 import io
 import os
 import sys
@@ -81,13 +82,27 @@ def poll_until_ready(token, polling_url):
 def download_csv(result):
     download_url = result["manifest"]["blobs"][0]["blobLink"]
     response = http.get(download_url)
+
+    if response.status_code != 200:
+        raise Exception(f"Failed to download cost report blob: {response.status_code} {response.text}")
+
     return response.text
 
 
-@dlt.resource(name="azure_costs", write_disposition="merge")
+@dlt.resource(name="azure_costs", write_disposition="merge", primary_key="resource_id")
 def azure_costs(csv_text):
     reader = csv.DictReader(io.StringIO(csv_text))
     for row in reader:
+        if not row.get("ResourceId"):
+            # Charges with no ResourceId (tax, credits, marketplace adjustments)
+            # would otherwise all merge onto the same empty-string primary key
+            # and silently overwrite each other. Derive a stable synthetic key
+            # from the rest of the row so distinct charges aren't collapsed,
+            # while re-ingesting the same row stays idempotent.
+            digest = hashlib.sha256(
+                "|".join(f"{k}={v}" for k, v in sorted(row.items())).encode("utf-8")
+            ).hexdigest()
+            row["ResourceId"] = f"unassigned:{digest}"
         yield row
 
 
