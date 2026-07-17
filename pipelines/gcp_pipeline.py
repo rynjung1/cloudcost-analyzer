@@ -12,6 +12,7 @@ How it works:
 Authentication: run 'gcloud auth application-default login' before running this pipeline.
 """
 
+import hashlib
 import os
 import re
 import sys
@@ -90,6 +91,30 @@ def bigquery_billing_table(
             record["service_id"] = service.get("id")
             record["service_description"] = service.get("description")
             record["sku_id"] = sku.get("id")
+
+            if not (record["project_id"] or record["service_id"] or record["sku_id"]):
+                # Tax/credit/adjustment lines legitimately have no project,
+                # service, or sku. Without a distinguishing key, two such
+                # lines for the same usage_start_time would collide on the
+                # merge key and silently overwrite each other. Derive a
+                # synthetic sku_id from the rest of the row, including cost,
+                # so distinct lines are never collapsed into one. This means
+                # a correction to one of these particular lines (same
+                # charge, later re-emitted with a different cost) will
+                # append rather than merge onto the original - an accepted
+                # tradeoff, since with no other dimension to key on, cost is
+                # the only signal available to tell "two different charges"
+                # apart from "one charge, corrected", and silently losing a
+                # distinct charge is worse than an occasional extra row.
+                fingerprint = {
+                    k: v for k, v in record.items()
+                    if k not in ("export_time", "project_id", "service_id", "sku_id")
+                }
+                digest = hashlib.sha256(
+                    "|".join(f"{k}={fingerprint[k]}" for k in sorted(fingerprint)).encode("utf-8")
+                ).hexdigest()
+                record["sku_id"] = f"unassigned:{digest}"
+
             yield record
 
     return _load_table.with_name("bigquery_billing_table")
